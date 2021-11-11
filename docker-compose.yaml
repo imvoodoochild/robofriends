@@ -5,4 +5,4 @@ services:
     container_name: robofriends
     image: robofriends
     ports:
-      - '8002:80'
+      - '8010:80'

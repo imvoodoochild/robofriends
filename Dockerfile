@@ -1,19 +1,32 @@
-# build environment
-FROM node:13.12.0-alpine as build
-ARG DIR
+# Use small Alpine Linux image
+FROM node:12-alpine
 
-WORKDIR /app
-ENV PATH /app/node_modules/.bin:$PATH
-COPY package.json ./
-COPY package-lock.json ./
+# Set environment variables
+ENV PORT=80
+ARG CLIENT_ID
 
-RUN npm ci --silent
-RUN npm install react-scripts@3.4.1 -g --silent
-COPY $DIR ./
+COPY . app/
+
+WORKDIR app/
+
+# Make sure dependencies exist for Webpack loaders
+RUN apk add --no-cache \
+  autoconf \
+  automake \
+  bash \
+  g++ \
+  libc6-compat \
+  libjpeg-turbo-dev \
+  libpng-dev \
+  make \
+  nasm 
+RUN npm ci --only-production --silent
+
+# Build production client side React application
 RUN npm run build
 
-# production environment
-FROM nginx:stable-alpine
-COPY --from=build /app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Expose port for Node
+EXPOSE $PORT
+
+# Start Node server
+ENTRYPOINT npm start
